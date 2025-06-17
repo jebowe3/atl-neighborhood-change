@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset='utf-8' />
+  <title>Atlanta Parcels</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <link href='https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.0.0/maplibre-gl.css' rel='stylesheet' />
+  <link href="https://fonts.googleapis.com/css?family=Rubik&display=swap" rel='stylesheet'>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
+  <style>
+    /* Body styles */
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      /* Use flexbox for layout */
+    }
+
+    #sidebar {
+      width: 25%;
+      background-color: #f8f8f8;
+      padding: 20px;
+      box-sizing: border-box;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 25%;
+      width: 75%;
+    }
+
+    .mapboxgl-popup {
+      font-family: 'Rubik', sans-serif;
+      min-width: 350px;
+    }
+
+    .map-overlay-2 {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background-color: rgba(255, 255, 255, 0.8);
+      box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.3);
+      border-radius: 3px;
+      padding: 10px;
+    }
+
+    .map-overlay-inner fieldset {
+      border: none;
+      padding: 0;
+      margin: 0 0 10px;
+    }
+
+    .map-overlay-inner .categoryLabel {
+      display: block;
+      font-weight: bold;
+      font-family: 'Rubik', sans-serif;
+      font-size: 14px;
+      margin: 0 0 5px;
+    }
+
+    input[type="checkbox"] {
+      cursor: pointer;
+    }
+
+    .checkbox-group {
+      padding-left: 20px;
+      /* Add padding to the left of the group */
+    }
+
+    #legend {
+      background-color: rgba(255, 255, 255, 0.5);
+      border-radius: 3px;
+      bottom: 40px;
+      width: 100px;
+      box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.3);
+      font: 12px/20px 'Rubik', 'Rubik', 'Rubik', sans-serif;
+      padding: 10px;
+      position: absolute;
+      right: 10px;
+      z-index: 1;
+      line-height: 18px;
+      color: black;
+    }
+
+    .session {
+      position: absolute;
+      z-index: 1;
+      background-color: rgba(255, 255, 255, 0.5);
+      border-radius: 3px;
+      box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.3);
+      top: 10px;
+      left: 10px;
+      padding: 5px;
+    }
+
+    .map-overlay i {
+      width: 10px;
+      height: 10px;
+      float: left;
+      margin-right: 5px;
+      margin-top: 4px;
+      opacity: 0.7;
+    }
+
+    /* Headers and Text */
+    h1 {
+      font-family: 'Rubik', sans-serif;
+      font-size: 24px;
+      font-weight: normal;
+      margin-bottom: 10px;
+      margin-top: 0;
+    }
+
+    h2 {
+      font-family: 'Rubik', sans-serif;
+      font-size: 18px;
+      font-weight: normal;
+      margin-bottom: 10px;
+      margin-top: 0;
+    }
+
+    h3 {
+      font-family: 'Rubik', sans-serif;
+      font-size: 16px;
+      font-weight: normal;
+      margin-bottom: 10px;
+      margin-top: 0;
+    }
+
+    p {
+      font-family: 'Merriweather', serif;
+      font-size: 14px;
+      font-weight: 300;
+      margin-bottom: 10px;
+      margin-top: 0;
+    }
+
+    /* Media Queries for mobile responsiveness */
+    @media (max-width: 768px) {
+      #sidebar {
+        width: 100%;
+        height: auto;
+        padding: 15px;
+      }
+
+      #map {
+        position: relative;
+        top: auto;
+        left: 0;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 22px;
+        /* Reduced size */
+      }
+
+      h2 {
+        font-size: 16px;
+        /* Reduced size */
+      }
+
+      h3 {
+        font-size: 14px;
+        /* Reduced size */
+      }
+
+      p {
+        font-size: 12px;
+        /* Reduced size */
+      }
+    }
+
+    @media (max-width: 480px) {
+      #sidebar {
+        width: 100%;
+        height: auto;
+        padding: 10px;
+      }
+
+      #map {
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 20px;
+        /* Reduced size */
+      }
+
+      h2 {
+        font-size: 14px;
+        /* Reduced size */
+      }
+
+      h3 {
+        font-size: 12px;
+        /* Reduced size */
+      }
+
+      p {
+        font-size: 10px;
+        /* Reduced size */
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="sidebar">
+    <h1>Risk of Neighborhood Change in Atlanta</h1>
+    <h2>By Jay Bowen, University of Iowa</h2>
+
+    <h3>Project Overview</h3>
+
+    <p>
+      Gentrification is a process of neighborhood change and destabilizing force impacting many communities throughout Metropolitan Atlanta. While often discussed, many residents and policymakers lack a clear understanding of the factors that contribute to this sort of neighborhood change and do not have good predictive tools for targeted approaches to mitigation strategies. Using Rigolon and Németh's 2019 study, "<a href="https://www.tandfonline.com/doi/abs/10.1080/07352166.2018.1562846" target="_blank">Toward a socioecological model of gentrification: How people, place, and policy shape neighborhood change</a>," this project aims to provide a data-driven approach to understanding the risk of gentrification in Atlanta by analyzing a variety of factors, including distance from the central business district, proportion of multifamily housing stock, age of housing, and demographic composition.
+    </p>
+    <p>
+      While other factors may have strong local significance for neighborhood change, Rigolon and Németh identified these four factors as key predictors of gentrification in multiple cities across the United States. While access to public transportation is often thought to be responsible for gentrification, their study found that this was not as significantly correlated as distance from the central business district. Moreover the study found that larger proportions of older multifamily housing stock set the stage for significant redevelopment. Finally, the authors note the strength of lingering racial prejudice in neighborhood reinvestment activities and found a strong correlation between risk of gentrification and higher proportions of white residents. To measure the risk of gentrification, this project assigned a score from 1 to 10 to each census tract for each of these four factors and averaged the sum to return a gentrification likelihood score on a scale of 1 to 10.
+    </p>
+  </div>
+
+  <div id="map">
+    <!-- choropleth legend -->
+    <div class='map-overlay' id='legend'></div>
+    <!-- the layer control -->
+    <div class="map-overlay-2 top">
+      <div class="map-overlay-inner">
+        <fieldset>
+          <label class="categoryLabel">Layers</label>
+
+          <!-- Gentrification Likelihood radio button with checkboxes underneath -->
+          <div class="layer-control-item">
+            <input type="radio" id="gentrification-likelihood" name="layer" value="gentrification-likelihood" onchange="toggleCheckboxes(true)" autocomplete="off" checked />
+            <label for="gentrification-likelihood" class="layer-label">Gentrification Likelihood</label>
+
+            <!-- Checkboxes for Affordable and Unaffordable (Initially hidden) with tab indentation -->
+            <div id="gentrification-checkboxes" class="checkbox-group">
+              <input type="checkbox" id="gentrification-affordable" value="gentrification-affordable" onchange="filterLayers('gentrification-affordable')" autocomplete="off" checked />
+              <label for="gentrification-affordable" class="checkbox-label">Affordable</label>
+              <br>
+              <input type="checkbox" id="gentrification-unaffordable" value="gentrification-unaffordable" onchange="filterLayers('gentrification-unaffordable')" autocomplete="off" checked />
+              <label for="gentrification-unaffordable" class="checkbox-label">Unaffordable</label>
+            </div>
+          </div>
+
+          <!-- Atlanta Parcels radio button -->
+          <div class="layer-control-item">
+            <input type="radio" id="parcels" name="layer" value="parcels" onchange="toggleCheckboxes(false)" autocomplete="off" />
+            <label for="parcels" class="layer-label">Atlanta Parcels</label>
+          </div>
+
+        </fieldset>
+      </div>
+    </div>
+  </div>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.0.0/maplibre-gl.js'></script>
+  <script src="https://unpkg.com/pmtiles@4.2.1/dist/pmtiles.js"></script>
+
+  <script>
+    let protocol = new pmtiles.Protocol({
+      metadata: true
+    });
+    maplibregl.addProtocol("pmtiles", protocol.tile);
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      center: [-84.43, 33.76],
+      zoom: 8,
+      minZoom: 0,
+      maxZoom: 15,
+      style: 'https://api.maptiler.com/maps/streets-v2/style.json?key=N4Vf2ndlX0gSIMYJMsmN'
+    });
+
+    map.addControl(new maplibregl.NavigationControl({
+      visualizePitch: true,
+      showZoom: true,
+      showCompass: true
+    }));
+    map.addControl(new maplibregl.ScaleControl({
+      position: 'bottom-left',
+      unit: 'imperial'
+    }));
+
+    // Toggle visibility of Gentrification Likelihood checkboxes based on selected layer
+    function toggleCheckboxes(show) {
+      const checkboxes = document.getElementById('gentrification-checkboxes');
+
+      // Get references to the checkboxes
+      const affordableCheckbox = document.getElementById('gentrification-affordable');
+      const unaffordableCheckbox = document.getElementById('gentrification-unaffordable');
+
+      if (show) {
+        checkboxes.style.display = 'block'; // Show checkboxes
+
+        // Ensure the Affordable and Unaffordable layers are turned on when Gentrification is selected
+        map.setLayoutProperty('gentrification-affordable', 'visibility', 'visible');
+        map.setLayoutProperty('gentrification-unaffordable', 'visibility', 'visible');
+        // Hide Atlanta Parcels layer when Gentrification is selected
+        map.setLayoutProperty('parcels', 'visibility', 'none');
+
+        // Ensure both checkboxes are checked when Gentrification Likelihood is selected
+        affordableCheckbox.checked = true;
+        unaffordableCheckbox.checked = true;
+
+        // Trigger the filterLayers function to update layers' visibility immediately
+        filterLayers('gentrification-affordable');
+        filterLayers('gentrification-unaffordable');
+      } else {
+        checkboxes.style.display = 'none'; // Hide checkboxes
+        // Ensure the Affordable and Unaffordable layers are turned off when Atlanta Parcels is selected
+        map.setLayoutProperty('gentrification-affordable', 'visibility', 'none');
+        map.setLayoutProperty('gentrification-unaffordable', 'visibility', 'none');
+        // Show Atlanta Parcels layer when it's selected
+        map.setLayoutProperty('parcels', 'visibility', 'visible');
+      }
+    }
+
+    // filterLayers function moved here
+    function filterLayers(layer) {
+      if (document.getElementById(layer).checked) {
+        // Make the corresponding layer visible if checkbox is checked
+        map.setLayoutProperty(layer, 'visibility', 'visible');
+      } else {
+        // Make the corresponding layer invisible if checkbox is unchecked
+        map.setLayoutProperty(layer, 'visibility', 'none');
+      }
+    }
+
+
+    map.on('load', () => {
+      const layers = map.getStyle().layers;
+      let firstSymbolId;
+      for (const layer of layers) {
+        if (layer.type === 'symbol') {
+          firstSymbolId = layer.id;
+          break;
+        }
+      }
+
+      let popup = new maplibregl.Popup({
+        closeButton: false,
+        closeOnClick: false
+      });
+      let hoveredStateId = null;
+      let hoveredStateGentrificationId = null;
+
+      // Add the gentrification source
+      map.addSource('gentrification', {
+        type: 'vector',
+        url: 'pmtiles://data/atl_metro_tracts_gentrification_score.pmtiles'
+      });
+
+      // Add the 'Affordable' gentrification layer
+      map.addLayer({
+        'id': 'gentrification-affordable',
+        'type': 'fill',
+        'source': 'gentrification',
+        'source-layer': 'atl_metro_tracts_gentrification_score',
+        'layout': {
+          'visibility': 'visible'
+        },
+        'minzoom': 0,
+        'maxzoom': 16,
+        'filter': ['==', ['get', 'Affordability'], 'Affordable'], // Filter for 'Affordable'
+        'paint': {
+          'fill-color': [
+            'case',
+            ['all', ['>=', ['get', 'GScore'], 2],
+              ['<=', ['get', 'GScore'], 3]
+            ], '#0571b0', // GScore between 2 and 3
+            ['all', ['>=', ['get', 'GScore'], 3],
+              ['<=', ['get', 'GScore'], 4]
+            ], '#92c5de', // GScore between 3 and 4
+            ['all', ['>=', ['get', 'GScore'], 4],
+              ['<=', ['get', 'GScore'], 5]
+            ], '#f7f7f7', // GScore between 4 and 5
+            ['all', ['>=', ['get', 'GScore'], 5],
+              ['<=', ['get', 'GScore'], 6]
+            ], '#f4a582', // GScore between 5 and 6
+            ['all', ['>=', ['get', 'GScore'], 6],
+              ['<=', ['get', 'GScore'], 9]
+            ], '#ca0020', // GScore between 6 and 9
+            '#f7fcb9' // Default color if none of the above ranges match
+          ],
+          'fill-opacity': [
+            'case',
+            ['boolean', ['feature-state', 'hover'], false], 0.75, // If hovered, set opacity to 0.75
+            0.5 // Default opacity is 0.5
+          ]
+        }
+      }, firstSymbolId);
+
+      // Add the 'Unaffordable' gentrification layer
+      map.addLayer({
+        'id': 'gentrification-unaffordable',
+        'type': 'fill',
+        'source': 'gentrification',
+        'source-layer': 'atl_metro_tracts_gentrification_score',
+        'layout': {
+          'visibility': 'visible'
+        },
+        'minzoom': 0,
+        'maxzoom': 16,
+        'filter': ['==', ['get', 'Affordability'], 'Unaffordable'], // Filter for 'Unaffordable'
+        'paint': {
+          'fill-color': [
+            'case',
+            ['all', ['>=', ['get', 'GScore'], 2],
+              ['<=', ['get', 'GScore'], 3]
+            ], '#0571b0', // GScore between 2 and 3
+            ['all', ['>=', ['get', 'GScore'], 3],
+              ['<=', ['get', 'GScore'], 4]
+            ], '#92c5de', // GScore between 3 and 4
+            ['all', ['>=', ['get', 'GScore'], 4],
+              ['<=', ['get', 'GScore'], 5]
+            ], '#f7f7f7', // GScore between 4 and 5
+            ['all', ['>=', ['get', 'GScore'], 5],
+              ['<=', ['get', 'GScore'], 6]
+            ], '#f4a582', // GScore between 5 and 6
+            ['all', ['>=', ['get', 'GScore'], 6],
+              ['<=', ['get', 'GScore'], 9]
+            ], '#ca0020', // GScore between 6 and 9
+            '#f7fcb9' // Default color if none of the above ranges match
+          ],
+          'fill-opacity': [
+            'case',
+            ['boolean', ['feature-state', 'hover'], false], 0.75, // If hovered, set opacity to 0.75
+            0.5 // Default opacity is 0.5
+          ]
+        }
+      }, firstSymbolId);
+
+      map.addSource('parcels', {
+        type: 'vector',
+        url: 'pmtiles://data/atl-parcels.pmtiles'
+      });
+      map.addLayer({
+        'id': 'parcels',
+        'type': 'fill',
+        'source': 'parcels',
+        'source-layer': 'atl_parcels',
+        'layout': {
+          'visibility': 'visible'
+        },
+        'minzoom': 0,
+        'maxzoom': 16,
+        'paint': {
+          'fill-color': 'orange',
+          'fill-opacity': [
+            'case',
+            ['boolean', ['feature-state', 'hover'], false], // Check if the feature has 'hover' state
+            0.75, // Opacity when hovered
+            0.5 // Default opacity
+          ]
+        }
+      }, firstSymbolId);
+
+      // remove this layer on load
+      map.setLayoutProperty('parcels', 'visibility', 'none');
+
+      map.on('mousemove', 'gentrification-affordable', (e) => {
+        map.getCanvas().style.cursor = 'pointer';
+        if (e.features.length > 0) {
+          if (hoveredStateGentrificationId !== null) {
+            map.setFeatureState({
+              source: 'gentrification',
+              sourceLayer: 'atl_metro_tracts_gentrification_score',
+              id: hoveredStateGentrificationId
+            }, {
+              hover: false
+            });
+          }
+          hoveredStateGentrificationId = e.features[0].id;
+          map.setFeatureState({
+            source: 'gentrification',
+            sourceLayer: 'atl_metro_tracts_gentrification_score',
+            id: hoveredStateGentrificationId
+          }, {
+            hover: true
+          });
+        }
+        let props = e.features[0].properties;
+        let name = `${props.FullName}`;
+        let gscore = props.GScore;
+        let affordability = props.Affordability;
+        popup.setLngLat(e.lngLat)
+          .setHTML(`<b>Address</b><br>${name}<br><b>Gentrification Likelihood (x/10)</b><br>${gscore}<br><b>Affordability</b><br>${affordability}`)
+          .addTo(map);
+      });
+
+      map.on('mouseleave', 'gentrification-affordable', () => {
+        map.getCanvas().style.cursor = '';
+        if (hoveredStateGentrificationId !== null) {
+          map.setFeatureState({
+            source: 'gentrification',
+            sourceLayer: 'atl_metro_tracts_gentrification_score',
+            id: hoveredStateGentrificationId
+          }, {
+            hover: false
+          });
+        }
+        hoveredStateGentrificationId = null;
+        popup.remove();
+      });
+
+      map.on('mousemove', 'gentrification-unaffordable', (e) => {
+        map.getCanvas().style.cursor = 'pointer';
+        if (e.features.length > 0) {
+          if (hoveredStateGentrificationId !== null) {
+            map.setFeatureState({
+              source: 'gentrification',
+              sourceLayer: 'atl_metro_tracts_gentrification_score',
+              id: hoveredStateGentrificationId
+            }, {
+              hover: false
+            });
+          }
+          hoveredStateGentrificationId = e.features[0].id;
+          map.setFeatureState({
+            source: 'gentrification',
+            sourceLayer: 'atl_metro_tracts_gentrification_score',
+            id: hoveredStateGentrificationId
+          }, {
+            hover: true
+          });
+        }
+        let props = e.features[0].properties;
+        let name = `${props.FullName}`;
+        let gscore = props.GScore;
+        let affordability = props.Affordability;
+        popup.setLngLat(e.lngLat)
+          .setHTML(`<b>Address</b><br>${name}<br><b>Gentrification Likelihood (x/10)</b><br>${gscore}<br><b>Affordability</b><br>${affordability}`)
+          .addTo(map);
+      });
+
+      map.on('mouseleave', 'gentrification-unaffordable', () => {
+        map.getCanvas().style.cursor = '';
+        if (hoveredStateGentrificationId !== null) {
+          map.setFeatureState({
+            source: 'gentrification',
+            sourceLayer: 'atl_metro_tracts_gentrification_score',
+            id: hoveredStateGentrificationId
+          }, {
+            hover: false
+          });
+        }
+        hoveredStateGentrificationId = null;
+        popup.remove();
+      });
+
+      map.on('mousemove', 'parcels', (e) => {
+        map.getCanvas().style.cursor = 'pointer';
+        if (e.features.length > 0) {
+          if (hoveredStateId !== null) {
+            map.setFeatureState({
+              source: 'parcels',
+              sourceLayer: 'atl_parcels',
+              id: hoveredStateId
+            }, {
+              hover: false
+            });
+          }
+          hoveredStateId = e.features[0].id;
+          map.setFeatureState({
+            source: 'parcels',
+            sourceLayer: 'atl_parcels',
+            id: hoveredStateId
+          }, {
+            hover: true
+          });
+        }
+        let props = e.features[0].properties;
+        let address = `${props.SITEADDRESS}, ${props.SITECITY}, ${props.SITESTATE}, ${props.SITEZIP}`;
+        let lclass = props.CLASSCD;
+        let value = props.TOT_APPR;
+        popup.setLngLat(e.lngLat)
+          .setHTML(`<b>Address</b><br>${address}<br><b>Classification</b><br>${lclass}<br><b>Assessed Value</b><br>${value}`)
+          .addTo(map);
+      });
+
+      map.on('mouseleave', 'parcels', () => {
+        map.getCanvas().style.cursor = '';
+        if (hoveredStateId !== null) {
+          map.setFeatureState({
+            source: 'parcels',
+            sourceLayer: 'atl_parcels',
+            id: hoveredStateId
+          }, {
+            hover: false
+          });
+        }
+        hoveredStateId = null;
+        popup.remove();
+      });
+
+      // Add the legend
+      const legend = document.getElementById('legend');
+      const colors = ['#ca0020', '#f4a582', '#f7f7f7', '#92c5de', '#0571b0'];
+      const labels = ['6-9', '5-6', '4-5', '3-4', '2-3'];
+      const legendTitle = document.createElement('label');
+      /*legendTitle.style.fontFamily = 'Rubik';
+      legendTitle.style.fontSize = '14px';*/
+      legendTitle.style.fontWeight = 'bold';
+      legendTitle.style.margin = '0 0 5px';
+      legendTitle.textContent = 'Gentrification Likelihood Score';
+      legend.appendChild(legendTitle);
+      for (let i = 0; i < colors.length; i++) {
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.marginBottom = '5px';
+        const color = document.createElement('div');
+        color.style.width = '20px';
+        color.style.height = '20px';
+        color.style.backgroundColor = colors[i];
+        color.style.borderRadius = '50%';
+        color.style.marginRight = '5px';
+        div.appendChild(color);
+        const label = document.createElement('span');
+        label.style.fontFamily = 'Rubik';
+        label.style.fontSize = '11px';
+        label.textContent = labels[i];
+        div.appendChild(label);
+        legend.appendChild(div);
+      }
+    });
+  </script>
+</body>
+
+</html>
