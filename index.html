@@ -363,7 +363,7 @@
 */
       map.addSource('gentrification', {
         type: 'vector',
-        tiles: [location.origin+"/atl_metro_tracts_gentrification_score/{z}/{x}/{y}.pbf"]
+        tiles: [location.origin+location.pathname+"/atl_metro_tracts_gentrification_score/{z}/{x}/{y}.pbf"]
       });    
 
       // Add the 'Affordable' gentrification layer
