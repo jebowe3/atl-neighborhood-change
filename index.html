@@ -355,10 +355,16 @@
       let hoveredStateGentrificationId = null;
 
       // Add the gentrification source
+/*    
       map.addSource('gentrification', {
         type: 'vector',
         url: 'pmtiles://data/atl_metro_tracts_gentrification_score.pmtiles'
       });
+*/
+      map.addSource('gentrification', {
+        type: 'vector',
+        tiles: [location.origin+"/atl_metro_tracts_gentrification_score/{z}/{x}/{y}.pbf"]
+      });    
 
       // Add the 'Affordable' gentrification layer
       map.addLayer({
@@ -439,11 +445,17 @@
           ]
         }
       }, firstSymbolId);
-
+/*
       map.addSource('parcels', {
         type: 'vector',
         url: 'pmtiles://data/atl-parcels.pmtiles'
       });
+*/      
+      map.addSource('parcels', {
+        type: 'vector',
+        tiles: [location.origin+"/atl-parcels/{z}/{x}/{y}.pbf"]
+      });
+
       map.addLayer({
         'id': 'parcels',
         'type': 'fill',
